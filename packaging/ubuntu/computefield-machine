@@ -2,10 +2,25 @@
 # Copyright (c) 2026 Compute Field Lab, LLC, Abu-Dhabi. All rights reserved.
 set -eu
 
-service_user="computefield-machine"
-binary="/opt/computefield-machine/venv/bin/computefield-machine"
-identity="/var/lib/computefield-machine/identity.json"
-work_dir="/var/lib/computefield-machine/work"
+case "$(basename "$0")" in
+  computefield-machine-cpu)
+    service_user="computefield-machine-cpu"
+    service_name="computefield-machine-cpu.service"
+    app_root="/opt/computefield-machine-cpu"
+    state_root="/var/lib/computefield-machine-cpu"
+    compute_mode="cpu"
+    ;;
+  *)
+    service_user="computefield-machine"
+    service_name="computefield-machine.service"
+    app_root="/opt/computefield-machine"
+    state_root="/var/lib/computefield-machine"
+    compute_mode="auto"
+    ;;
+esac
+binary="$app_root/venv/bin/computefield-machine"
+identity="$state_root/identity.json"
+work_dir="$state_root/work"
 command_name="${1:-}"
 
 case "$command_name" in
@@ -18,16 +33,27 @@ case "$command_name" in
       exec sudo -- "$0" "$@"
     fi
     set +e
-    runuser -u "$service_user" -- env \
-      MACHINE_IDENTITY_FILE="$identity" \
-      MACHINE_WORK_DIR="$work_dir" \
-      MACHINE_ISOLATION_MODE=sandbox \
-      "$binary" "$@"
+    if [ "$compute_mode" = "cpu" ]; then
+      runuser -u "$service_user" -- env \
+        MACHINE_IDENTITY_FILE="$identity" \
+        MACHINE_WORK_DIR="$work_dir" \
+        MACHINE_ISOLATION_MODE=sandbox \
+        MACHINE_COMPUTE_MODE=cpu \
+        CUDA_VISIBLE_DEVICES= \
+        "$binary" "$@"
+    else
+      runuser -u "$service_user" -- env \
+        MACHINE_IDENTITY_FILE="$identity" \
+        MACHINE_WORK_DIR="$work_dir" \
+        MACHINE_ISOLATION_MODE=sandbox \
+        MACHINE_COMPUTE_MODE=auto \
+        "$binary" "$@"
+    fi
     status=$?
     set -e
     case "$command_name:$status" in
       pair:0|unpair:0|sharing:0)
-        systemctl restart computefield-machine.service
+        systemctl restart "$service_name"
         ;;
     esac
     exit "$status"

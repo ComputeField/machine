@@ -11,6 +11,7 @@ from config import Settings
 
 def test_sharing_enable_requires_os_isolation(monkeypatch):
     identity = SimpleNamespace(
+        cli_name="computefield-machine",
         sharing_enabled=False,
         sharing_supported=False,
         machine_isolation_mode="none",
@@ -26,6 +27,7 @@ def test_sharing_enable_requires_os_isolation(monkeypatch):
 def test_sharing_enable_persists_in_isolated_service(monkeypatch, capsys, tmp_path):
     saved = {}
     identity = SimpleNamespace(
+        cli_name="computefield-machine",
         sharing_enabled=False,
         sharing_supported=True,
         machine_isolation_mode="sandbox",
@@ -55,6 +57,11 @@ def test_saved_shared_flag_is_inactive_without_isolation(tmp_path):
 
     assert unisolated.sharing_enabled is False
     assert isolated.sharing_enabled is True
+
+
+def test_cpu_profile_uses_the_cpu_command_name():
+    assert Settings(machine_compute_mode="cpu").cli_name == "computefield-machine-cpu"
+    assert Settings(machine_compute_mode="auto").cli_name == "computefield-machine"
 
 
 def test_pair_prompt_consent(monkeypatch):

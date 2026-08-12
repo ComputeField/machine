@@ -7,7 +7,7 @@ import uuid
 from urllib.parse import urlsplit
 
 import requests
-from capabilities import default_machine_name
+from capabilities import default_machine_name, get_capabilities
 from config import settings
 
 
@@ -71,7 +71,7 @@ def pair(api_url: str, code: str, *, name: str = "", wait: bool = True) -> dict:
         {
             "code": code,
             "host_id": host_id,
-            "name": name or settings.machine_name or default_machine_name(),
+            "name": name or settings.machine_name or default_machine_name(get_capabilities(settings.compute_mode)),
             "client_version": settings.client_version,
         },
     )
@@ -92,7 +92,7 @@ def finish_pairing() -> dict:
     identity = settings.saved_identity
     required = ("api_url", "pairing_id", "claim_secret", "host_id")
     if any(not identity.get(key) for key in required):
-        raise RuntimeError("Run 'computefield-machine pair CODE' first")
+        raise RuntimeError(f"Run '{settings.cli_name} pair CODE' first")
     deadline = time.monotonic() + 15 * 60
     while time.monotonic() < deadline:
         status = _post(

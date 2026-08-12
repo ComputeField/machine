@@ -4,10 +4,24 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from capabilities import default_machine_name, get_capabilities
 
 
 class TestGetCapabilities:
+    def test_forced_cpu_does_not_probe_accelerators(self):
+        with patch("capabilities.torch") as mock_torch:
+            caps = get_capabilities("cpu")
+
+        assert caps == {"compute_mode": "cpu"}
+        mock_torch.cuda.is_available.assert_not_called()
+
+    def test_rejects_unknown_compute_mode(self):
+        with patch("capabilities.torch"):
+            with pytest.raises(ValueError, match="compute_mode"):
+                get_capabilities("quantum")
+
     def test_cpu_only_when_no_accelerator(self):
         with patch("capabilities.torch") as mock_torch:
             mock_torch.cuda.is_available.return_value = False

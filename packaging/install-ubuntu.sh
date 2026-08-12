@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 [[ "$(id -u)" -eq 0 ]] || { echo "Run with sudo" >&2; exit 1; }
 SOURCE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-command -v nvidia-smi >/dev/null || { echo "Install the NVIDIA driver first; CUDA itself is bundled by PyTorch." >&2; exit 1; }
+command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1 || { echo "Install a working NVIDIA driver first; CUDA itself is bundled by PyTorch." >&2; exit 1; }
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv ca-certificates bubblewrap util-linux
 python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 10))' || {

@@ -207,12 +207,12 @@ async def _cleanup_session(
 async def main() -> None:
     uri = settings.manager_url
     if not settings.host_id or not uri or (settings.require_auth and not settings.saved_credential):
-        raise RuntimeError("Machine is not paired. Run 'computefield-machine pair CODE'.")
+        raise RuntimeError(f"Machine is not paired. Run '{settings.cli_name} pair CODE'.")
     work_root = WorkRoot(settings.work_dir)
     try:
         sandboxed = settings.sharing_supported
         sandbox_backend = sandbox_self_test(str(work_root.path)) if sandboxed else "none"
-        caps = get_capabilities()
+        caps = get_capabilities(settings.compute_mode)
         caps["machine_name"] = settings.machine_name or default_machine_name(caps)
         caps["sharing_enabled"] = settings.sharing_enabled
         caps["workload_isolation"] = sandbox_backend

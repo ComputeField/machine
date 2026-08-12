@@ -32,7 +32,7 @@ def _pair_sharing_consent(args: argparse.Namespace) -> bool:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="computefield-machine")
+    parser = argparse.ArgumentParser(prog=settings.cli_name)
     subcommands = parser.add_subparsers(dest="command", required=True)
     pair_command = subcommands.add_parser("pair", help="connect this machine to an account")
     pair_command.add_argument("code", help="short code created on the Machines page")
@@ -75,6 +75,7 @@ def main() -> None:
                     "paired": bool(identity.get("credential")),
                     "host_id": identity.get("host_id"),
                     "broker": identity.get("broker_url"),
+                    "compute_mode": settings.compute_mode,
                     "sharing": settings.sharing_enabled,
                     "isolation": settings.machine_isolation_mode,
                 },
@@ -96,7 +97,7 @@ def main() -> None:
             settings.update_identity(sharing_enabled=enabled)
             print(
                 f"Cross-account sharing {'enabled' if enabled else 'disabled'}. "
-                "Restart computefield-machine to apply the change."
+                f"Restart {settings.cli_name} to apply the change."
             )
     elif args.command == "doctor":
         Path(settings.work_dir).mkdir(mode=0o700, parents=True, exist_ok=True)

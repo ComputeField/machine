@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 [[ "$(id -u)" -eq 0 ]] || { echo "Run with sudo." >&2; exit 1; }
 [[ "$(uname -m)" == "x86_64" ]] || { echo "The published CUDA package currently requires x86_64." >&2; exit 1; }
-command -v nvidia-smi >/dev/null || {
+command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1 || {
   echo "Install the NVIDIA driver and reboot before installing ComputeField Machine." >&2
   exit 1
 }

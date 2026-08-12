@@ -26,7 +26,7 @@ def default_machine_name(caps: dict | None = None) -> str:
     return f"{hardware} Machine"
 
 
-def get_capabilities() -> dict:
+def get_capabilities(compute_mode: str = "auto") -> dict:
     """Return a capabilities dict for the registration message.
 
     Always present:
@@ -38,7 +38,14 @@ def get_capabilities() -> dict:
         vram_mb       int   (total VRAM of first GPU)
         cuda_version  str   (e.g. "12.1")
     """
+    mode = compute_mode.strip().lower()
+    if mode not in {"auto", "cpu"}:
+        raise ValueError("compute_mode must be 'auto' or 'cpu'")
+
     caps: dict = {"compute_mode": "cpu"}
+    if mode == "cpu":
+        logger.info("Capabilities: CPU-only (forced by installation profile)")
+        return caps
 
     if not torch.cuda.is_available():
         if torch.backends.mps.is_available():

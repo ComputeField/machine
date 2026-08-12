@@ -13,10 +13,13 @@ class Settings(BaseSettings):
     machine_broker_url: str = "wss://computefield.net/ws/machine"
     computefield_api_url: str = "https://computefield.net"
     machine_name: str = ""
+    # Packaged CPU services force CPU even when the same server also exposes
+    # an NVIDIA device to a separate Machine instance.
+    machine_compute_mode: str = "auto"
     # Selects one server-configured object-storage route. Ordinary installed
     # Machines stay on "external"; the Docker dev worker uses "internal".
     machine_transfer_route: str = "external"
-    client_version: str = "0.1.0"
+    client_version: str = "0.1.1"
     allow_foreign_workloads: bool = False
     machine_isolation_mode: str = "none"
     hardware_stats_interval: int = 5
@@ -67,6 +70,17 @@ class Settings(BaseSettings):
         if self.machine_work_dir:
             return self.machine_work_dir
         return str(Path(self.machine_identity_file).parent / "work")
+
+    @property
+    def compute_mode(self) -> str:
+        mode = self.machine_compute_mode.strip().lower()
+        if mode not in {"auto", "cpu"}:
+            raise ValueError("MACHINE_COMPUTE_MODE must be 'auto' or 'cpu'")
+        return mode
+
+    @property
+    def cli_name(self) -> str:
+        return "computefield-machine-cpu" if self.compute_mode == "cpu" else "computefield-machine"
 
     def update_identity(self, **values: object) -> None:
         data = self.saved_identity

@@ -11,7 +11,7 @@ Detect and report hardware capabilities at registration.
 
 Produce a useful hardware-first name without exposing an internal ID.
 
-### `def get_capabilities()`
+### `def get_capabilities(compute_mode: str='auto')`
 
 Return a capabilities dict for the registration message.
 
@@ -34,6 +34,8 @@ Settings.
 - `def saved_identity(self)` — Saved identity.
 - `def saved_credential(self)` — Saved credential.
 - `def work_dir(self)` — Work dir.
+- `def compute_mode(self)` — Compute mode.
+- `def cli_name(self)` — Cli name.
 - `def update_identity(self, **values: object)` — Update identity.
 - `def save_identity(self, host_id: str, credential: str, broker_url: str='')` — Save identity.
 - `def clear_identity(self)` — Clear identity.

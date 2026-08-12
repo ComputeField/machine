@@ -1,7 +1,7 @@
 <!-- Copyright (c) 2026 Compute Field Lab, LLC, Abu-Dhabi. All rights reserved. -->
 # ComputeField Machine
 
-The open-source GPU client for a Compute Field platform. It is installed on
+The open-source compute client for a Compute Field platform. It is installed on
 compute computers, not on the platform server. It connects outbound, processes
 one leased workload at a time, and clears task data before reuse. Docker
 Desktop is not required for the native packages.
@@ -15,6 +15,13 @@ curl -fsSL https://github.com/ComputeField/machine/releases/latest/download/boot
   | sudo -E bash
 ```
 
+CPU-only Ubuntu 24.04 or newer, x86-64:
+
+```bash
+curl -fsSL https://github.com/ComputeField/machine/releases/latest/download/bootstrap-ubuntu-cpu.sh \
+  | sudo -E bash
+```
+
 macOS with Apple silicon:
 
 ```bash
@@ -25,11 +32,13 @@ From a source checkout:
 
 ```bash
 sudo ./packaging/install-ubuntu.sh       # Ubuntu
+sudo ./packaging/install-ubuntu-cpu.sh   # Ubuntu CPU service
 ./packaging/install-macos.sh             # macOS MPS/CPU
 ```
 
-Tagged releases also contain `computefield-machine_amd64.deb` and its SHA-256
-checksum. The bootstrap installer verifies the package before installation.
+Tagged releases also contain separate GPU and CPU Debian packages and their
+SHA-256 checksums. Each bootstrap installer verifies its package before
+installation.
 The Ubuntu package installs a hardened systemd service; the macOS package
 installs a launchd agent. Dependencies stay inside the application virtual
 environment. The first install downloads the pinned PyTorch runtime and can
@@ -44,6 +53,10 @@ copy the command shown there. The CLI defaults to the same public HTTPS origin:
 ```bash
 computefield-machine pair ABCD-EF12-3456
 ```
+
+Use `computefield-machine-cpu pair ABCD-EF12-3456` for the CPU package. GPU
+and CPU packages can coexist on one server. They have separate service users,
+state directories, credentials, and systemd units, and each needs its own code.
 
 Compare the fingerprint in the terminal and browser, confirm it in the
 browser, then accept or decline the cross-account workload prompt. `--share`
@@ -76,6 +89,7 @@ reporting success.
 ```bash
 journalctl -u computefield-machine -f          # Ubuntu logs
 sudo systemctl stop computefield-machine       # Ubuntu stop
+sudo systemctl stop computefield-machine-cpu   # Ubuntu CPU stop
 computefield-machine stop                      # macOS stop
 computefield-machine unpair --yes              # remove local identity
 ```
@@ -97,9 +111,9 @@ docker build --target cpu -t computefield-machine:dev .
 Release checks test and audit Python, validate packaging, and build the CPU
 image. A reviewed release is built explicitly with
 `packaging/build-release.sh VERSION`;
-GitHub automation is intentionally disabled. Upload the generated Debian and
-macOS source archives, both bootstrap installers, and all four SHA-256 files to
-the matching manual release. This directory is an independent public
-repository; the private platform repository is not needed to build or run it.
+GitHub automation is intentionally disabled. Upload the generated GPU/CPU
+Debian packages, macOS source archive, three bootstrap installers, and their
+SHA-256 files to the matching manual release. This directory is an independent
+public repository; the private platform repository is not needed to build or run it.
 The generated Python interface index is in
 [`docs/reference/python-api.md`](docs/reference/python-api.md).

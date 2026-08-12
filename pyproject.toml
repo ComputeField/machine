@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Compute Field Lab, LLC, Abu-Dhabi. All rights reserved.
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "computefield-machine"
+version = "0.1.0"
+description = "Run local GPU workloads for the ComputeField network"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+dynamic = ["dependencies"]
+
+[project.scripts]
+computefield-machine = "cli:main"
+
+[tool.setuptools]
+py-modules = ["capabilities", "cli", "config", "delta", "executor", "gpu_device", "main", "model_artifact", "monitor", "pairing", "sandbox_runtime", "script_guard", "speedtest", "workload_runner", "workspace"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }

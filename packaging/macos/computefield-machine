@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Copyright (c) 2026 Compute Field Lab, LLC, Abu-Dhabi. All rights reserved.
+set -Eeuo pipefail
+
+prefix="${HOME}/Library/Application Support/ComputeField Machine"
+export MACHINE_IDENTITY_FILE="${MACHINE_IDENTITY_FILE:-$prefix/identity.json}"
+export MACHINE_WORK_DIR="${MACHINE_WORK_DIR:-$prefix/work}"
+export MACHINE_ISOLATION_MODE="${MACHINE_ISOLATION_MODE:-sandbox}"
+
+label="com.computefield.machine"
+domain="gui/$(id -u)"
+plist="${HOME}/Library/LaunchAgents/${label}.plist"
+
+case "${1:-}" in
+  start)
+    if launchctl print "${domain}/${label}" >/dev/null 2>&1; then
+      launchctl kickstart -k "${domain}/${label}"
+    else
+      launchctl bootstrap "$domain" "$plist"
+    fi
+    echo "ComputeField Machine started."
+    exit 0
+    ;;
+  stop)
+    if launchctl print "${domain}/${label}" >/dev/null 2>&1; then
+      launchctl bootout "${domain}/${label}"
+    fi
+    echo "ComputeField Machine stopped."
+    exit 0
+    ;;
+  restart)
+    if launchctl print "${domain}/${label}" >/dev/null 2>&1; then
+      launchctl bootout "${domain}/${label}"
+    fi
+    launchctl bootstrap "$domain" "$plist"
+    echo "ComputeField Machine restarted."
+    exit 0
+    ;;
+esac
+
+exec "$prefix/venv/bin/computefield-machine" "$@"

@@ -1,0 +1,11 @@
+-r requirements.txt
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.13.0
+torchvision==0.28.0
+nvidia-ml-py==12.560.30
+pytest==9.0.3
+pytest-asyncio==1.4.0
+ruff==0.16.1
+bandit==1.9.4
+pip-audit==2.10.0
+codespell==2.4.1

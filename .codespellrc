@@ -1,0 +1,3 @@
+[codespell]
+skip = */target/*,*/__pycache__/*,.git
+ignore-words-list = coo,renderD

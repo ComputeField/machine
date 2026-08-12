@@ -1,0 +1,49 @@
+# Copyright (c) 2026 Compute Field Lab, LLC, Abu-Dhabi. All rights reserved.
+
+[Unit]
+Description=ComputeField Machine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=computefield-machine
+Group=computefield-machine
+Environment=MACHINE_IDENTITY_FILE=/var/lib/computefield-machine/identity.json
+Environment=MACHINE_WORK_DIR=/var/lib/computefield-machine/work
+Environment=MACHINE_ISOLATION_MODE=sandbox
+EnvironmentFile=-/etc/computefield-machine/environment
+ExecStart=/opt/computefield-machine/venv/bin/computefield-machine run
+Restart=always
+RestartSec=5
+TasksMax=1024
+MemoryHigh=90%
+MemoryMax=95%
+# The trusted controller launches unprivileged bubblewrap. The workload never
+# inherits controller state or gains privileges across exec.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectProc=invisible
+ProcSubset=pid
+ReadWritePaths=/var/lib/computefield-machine
+RestrictSUIDSGID=true
+LockPersonality=true
+PrivateDevices=false
+PrivateMounts=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectHostname=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallFilter=~@raw-io @reboot @swap
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

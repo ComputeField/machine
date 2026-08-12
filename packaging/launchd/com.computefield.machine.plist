@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2026 Compute Field Lab, LLC, Abu-Dhabi. All rights reserved. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.computefield.machine</string>
+  <key>ProgramArguments</key><array><string>__PREFIX__/venv/bin/computefield-machine</string><string>run</string></array>
+  <key>EnvironmentVariables</key><dict><key>MACHINE_IDENTITY_FILE</key><string>__HOME__/Library/Application Support/ComputeField Machine/identity.json</string><key>MACHINE_WORK_DIR</key><string>__HOME__/Library/Application Support/ComputeField Machine/work</string><key>MACHINE_ISOLATION_MODE</key><string>sandbox</string></dict>
+  <key>RunAtLoad</key><true/><key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>__HOME__/Library/Logs/computefield-machine.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/Library/Logs/computefield-machine.log</string>
+</dict></plist>

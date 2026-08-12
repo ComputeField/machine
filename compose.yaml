@@ -1,0 +1,52 @@
+# Copyright (c) 2026 Compute Field Lab, LLC, Abu-Dhabi. All rights reserved.
+name: computefield-machine
+
+# Development/container build harness. Native packages are the supported
+# production route for cross-account shared workloads.
+
+services:
+  machine:
+    image: ${MACHINE_IMAGE:-computefield-machine}:${IMAGE_TAG:-local}
+    build:
+      context: .
+      target: cuda
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-}
+    environment:
+      MACHINE_BROKER_URL: ${MACHINE_BROKER_URL:-}
+      MACHINE_IDENTITY_FILE: /var/lib/computefield-machine/identity.json
+      MACHINE_WORK_DIR: /var/lib/computefield-machine/work
+      MACHINE_ISOLATION_MODE: none
+      MACHINE_ID: ${MACHINE_ID:-}
+      HARDWARE_STATS_INTERVAL: ${HARDWARE_STATS_INTERVAL:-5}
+      SHARD_CACHE_MAX_MB: ${SHARD_CACHE_MAX_MB:-8192}
+      SPEEDTEST_PAYLOAD_MB: ${SPEEDTEST_PAYLOAD_MB:-8}
+      CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-0}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1}
+    restart: unless-stopped
+    init: true
+    gpus: all
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    pids_limit: 2048
+    stop_grace_period: 45s
+    ulimits:
+      core: 0
+      nofile: 65536
+    volumes:
+      - machine_cache:/tmp
+      - machine_identity:/var/lib/computefield-machine
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "3"
+
+volumes:
+  machine_cache:
+  machine_identity:

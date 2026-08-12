@@ -1,0 +1,20 @@
+# Copyright (c) 2026 Compute Field Lab, LLC, Abu-Dhabi. All rights reserved.
+
+.env
+.venv/
+identity.json
+work/
+__pycache__/
+*.pyc
+*.log
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+computefield-machine_*.deb*
+computefield-machine_macos-source.tar.gz*
+/bootstrap-ubuntu.sh*
+/bootstrap-macos.sh*

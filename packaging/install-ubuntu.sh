@@ -27,8 +27,16 @@ python3 -m venv /opt/computefield-machine/venv
 /opt/computefield-machine/venv/bin/pip install "$SOURCE_DIR"
 install -m 0755 "$SOURCE_DIR/packaging/ubuntu/computefield-machine" /usr/bin/computefield-machine
 install -m 0644 "$SOURCE_DIR/packaging/systemd/computefield-machine.service" /etc/systemd/system/computefield-machine.service
+install -m 0644 "$SOURCE_DIR/packaging/systemd/computefield-machine-verify.service" /etc/systemd/system/computefield-machine-verify.service
+ln -sfn venv /opt/computefield-machine/verify-venv
 systemctl daemon-reload
 systemctl enable computefield-machine.service
+if ! systemctl start computefield-machine-verify.service; then
+  rm -f /opt/computefield-machine/verify-venv
+  echo "ComputeField Machine failed its systemd sandbox verification." >&2
+  exit 1
+fi
+rm -f /opt/computefield-machine/verify-venv
 runuser -u computefield-machine -- env \
   MACHINE_IDENTITY_FILE=/var/lib/computefield-machine/identity.json \
   MACHINE_WORK_DIR=/var/lib/computefield-machine/work \

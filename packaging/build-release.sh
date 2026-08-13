@@ -38,7 +38,7 @@ rm -f -- "${artifacts[@]}" \
   "computefield-machine_${VERSION}_amd64.deb" \
   "computefield-machine-cpu_${VERSION}_amd64.deb"
 
-if [[ "$(uname -s)" == Linux && "$(uname -m)" == x86_64 ]] && command -v dpkg-deb >/dev/null; then
+if command -v dpkg-deb >/dev/null && { [[ "$(uname -s)" == Linux ]] || command -v gsed >/dev/null; }; then
   packaging/build-deb.sh "$VERSION" gpu
   packaging/build-deb.sh "$VERSION" cpu
 else

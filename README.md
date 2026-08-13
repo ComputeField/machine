@@ -47,7 +47,9 @@ working environment.
 
 Ubuntu's restricted-user-namespace policy is supported without disabling it:
 the package provisions a path-specific AppArmor permission for its private,
-root-owned Bubblewrap executable. No global security sysctl is changed.
+root-owned Bubblewrap executable. Installation also runs the sandbox through a
+one-shot unit with the production systemd security boundary before reporting
+success. No global security sysctl is changed.
 
 ## Pair
 

@@ -55,6 +55,7 @@ case "$command_name" in
     set -e
     case "$command_name:$status" in
       pair:0|sharing:0)
+        systemctl reset-failed "$service_name" >/dev/null 2>&1 || true
         if ! systemctl restart "$service_name"; then
           echo "Machine settings were saved, but the service failed its startup checks." >&2
           echo "Inspect it with: journalctl -u $service_name -n 80 --no-pager" >&2

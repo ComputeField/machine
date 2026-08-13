@@ -1,14 +1,10 @@
 # Copyright (c) 2026 Compute Field Lab, LLC, Abu-Dhabi. All rights reserved.
 
 [Unit]
-Description=ComputeField Machine (CPU)
-After=network-online.target
-Wants=network-online.target
-StartLimitIntervalSec=300
-StartLimitBurst=5
+Description=Verify ComputeField Machine CPU sandbox
 
 [Service]
-Type=simple
+Type=oneshot
 User=computefield-machine-cpu
 Group=computefield-machine-cpu
 Environment=MACHINE_IDENTITY_FILE=/var/lib/computefield-machine-cpu/identity.json
@@ -18,13 +14,8 @@ Environment=MACHINE_COMPUTE_MODE=cpu
 Environment=CUDA_VISIBLE_DEVICES=
 Environment=COMPUTEFIELD_BWRAP=/opt/computefield-machine-cpu/bin/bwrap
 EnvironmentFile=-/etc/computefield-machine-cpu/environment
-ExecStartPre=/opt/computefield-machine-cpu/venv/bin/computefield-machine doctor
-ExecStart=/opt/computefield-machine-cpu/venv/bin/computefield-machine run
-Restart=on-failure
-RestartSec=5
+ExecStart=/opt/computefield-machine-cpu/verify-venv/bin/computefield-machine doctor
 TasksMax=1024
-MemoryHigh=90%
-MemoryMax=95%
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
@@ -38,13 +29,8 @@ ProtectClock=true
 ProtectControlGroups=true
 ProtectKernelModules=true
 RestrictRealtime=true
-# AF_NETLINK is required only while Bubblewrap configures loopback inside the
-# workload's isolated network namespace. The workload has no host networking.
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
 SystemCallFilter=~@raw-io @reboot @swap
 SystemCallErrorNumber=EPERM
 SystemCallArchitectures=native
 UMask=0077
-
-[Install]
-WantedBy=multi-user.target

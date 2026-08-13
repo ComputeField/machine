@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "computefield-machine"
-version = "0.1.7"
+version = "0.1.8"
 description = "Run local compute workloads for the ComputeField network"
 requires-python = ">=3.10"
 license = "Apache-2.0"

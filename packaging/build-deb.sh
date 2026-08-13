@@ -5,6 +5,10 @@ set -Eeuo pipefail
 VERSION="${1:?usage: packaging/build-deb.sh VERSION [gpu|cpu]}"
 PROFILE="${2:-gpu}"
 SOURCE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+SED=sed
+if command -v gsed >/dev/null 2>&1; then
+  SED=gsed
+fi
 project_version="$(sed -n 's/^version = "\([^"]*\)"$/\1/p' "$SOURCE_DIR/pyproject.toml" | head -n 1)"
 [[ "$VERSION" == "$project_version" ]] || {
   echo "Package version $VERSION does not match pyproject.toml ($project_version)." >&2
@@ -20,6 +24,8 @@ case "$PROFILE" in
     app_root="/opt/computefield-machine"
     state_root="/var/lib/computefield-machine"
     service_source="packaging/systemd/computefield-machine.service"
+    verify_service_name="computefield-machine-verify.service"
+    verify_service_source="packaging/systemd/computefield-machine-verify.service"
     apparmor_profile="computefield-machine-bwrap"
     torch_specs="torch==2.13.0 torchvision==0.28.0"
     torch_index_option="--index-url"
@@ -34,6 +40,8 @@ case "$PROFILE" in
     app_root="/opt/computefield-machine-cpu"
     state_root="/var/lib/computefield-machine-cpu"
     service_source="packaging/systemd/computefield-machine-cpu.service"
+    verify_service_name="computefield-machine-cpu-verify.service"
+    verify_service_source="packaging/systemd/computefield-machine-cpu-verify.service"
     apparmor_profile="computefield-machine-cpu-bwrap"
     torch_specs="torch==2.13.0+cpu torchvision==0.28.0+cpu"
     torch_index_option="--extra-index-url"
@@ -61,6 +69,7 @@ tar -C "$SOURCE_DIR" -cf - "${runtime_sources[@]}" | tar -x -C "$SOURCE_ROOT"
 chmod -R go-w "$SOURCE_ROOT"
 install -m 0755 "$SOURCE_DIR/packaging/ubuntu/computefield-machine" "$ROOT/usr/bin/$command_name"
 install -m 0644 "$SOURCE_DIR/$service_source" "$ROOT/etc/systemd/system/$service_name"
+install -m 0644 "$SOURCE_DIR/$verify_service_source" "$ROOT/etc/systemd/system/$verify_service_name"
 cat >"$ROOT/etc/apparmor.d/$apparmor_profile" <<EOF
 abi <abi/4.0>,
 include <tunables/global>
@@ -74,7 +83,7 @@ Package: $package_name
 Version: $VERSION
 Architecture: amd64
 Maintainer: Compute Field Lab, LLC <support@computefield.com>
-Depends: python3 (>= 3.10), python3-venv, ca-certificates, apparmor, bubblewrap, util-linux
+Depends: python3 (>= 3.10), python3-venv, systemd, ca-certificates, apparmor, bubblewrap, util-linux
 Section: science
 Priority: optional
 Description: $description
@@ -85,6 +94,7 @@ set -e
 profile="@PROFILE@"
 service_user="@SERVICE_USER@"
 service_name="@SERVICE_NAME@"
+verify_service_name="@VERIFY_SERVICE_NAME@"
 app_root="@APP_ROOT@"
 state_root="@STATE_ROOT@"
 apparmor_profile="@APPARMOR_PROFILE@"
@@ -106,10 +116,12 @@ install -d -o "$service_user" -g "$service_user" -m 0700 "$state_root"
 current="$app_root/venv"
 candidate="$app_root/venv.candidate.$$"
 link="$app_root/.venv-link.$$"
+verify_link="$app_root/verify-venv"
 activated=0
 legacy=
 rollback() {
   rm -f "$link"
+  rm -f "$verify_link"
   if [ "$activated" -eq 0 ]; then
     rm -rf "$candidate"
     if [ -n "$legacy" ] && [ ! -e "$current" ]; then
@@ -151,6 +163,20 @@ else
     }
 fi
 
+# Validate the candidate under the same systemd security boundary used in
+# production. This catches incompatible namespace, procfs, address-family and
+# mount restrictions before an unpaired installation is reported successful.
+ln -s "$(basename "$candidate")" "$verify_link"
+systemctl daemon-reload
+if ! systemctl start "$verify_service_name"; then
+  rm -f "$verify_link"
+  echo "ComputeField Machine failed its systemd sandbox verification." >&2
+  journalctl -u "$verify_service_name" -n 40 --no-pager >&2 || true
+  exit 1
+fi
+rm -f "$verify_link"
+systemctl reset-failed "$verify_service_name" >/dev/null 2>&1 || true
+
 previous=
 if [ -L "$current" ]; then
   previous="$(readlink -f "$current" || true)"
@@ -166,6 +192,7 @@ trap - EXIT HUP INT TERM
 systemctl daemon-reload || true
 systemctl enable "$service_name" || true
 if [ -s "$state_root/identity.json" ]; then
+  systemctl reset-failed "$service_name" >/dev/null 2>&1 || true
   systemctl restart "$service_name"
 else
   systemctl stop "$service_name" >/dev/null 2>&1 || true
@@ -176,10 +203,11 @@ case "$previous" in
     ;;
 esac
 EOF
-sed -i \
+"$SED" -i \
   -e "s|@PROFILE@|$PROFILE|g" \
   -e "s|@SERVICE_USER@|$service_user|g" \
   -e "s|@SERVICE_NAME@|$service_name|g" \
+  -e "s|@VERIFY_SERVICE_NAME@|$verify_service_name|g" \
   -e "s|@APP_ROOT@|$app_root|g" \
   -e "s|@STATE_ROOT@|$state_root|g" \
   -e "s|@APPARMOR_PROFILE@|$apparmor_profile|g" \
@@ -193,6 +221,7 @@ cat >"$ROOT/DEBIAN/prerm" <<EOF
 set -e
 if [ "\${1:-}" = remove ]; then
   systemctl disable --now "$service_name" >/dev/null 2>&1 || true
+  systemctl stop "$verify_service_name" >/dev/null 2>&1 || true
   apparmor_parser -R "/etc/apparmor.d/$apparmor_profile" >/dev/null 2>&1 || true
 fi
 EOF

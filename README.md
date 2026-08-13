@@ -68,10 +68,10 @@ Compare the fingerprint in the terminal and browser, confirm it in the
 browser, then accept or decline the cross-account workload prompt. `--share`
 or `--private` records the same choice non-interactively. On Ubuntu the command
 requests `sudo`, writes the service identity, and restarts the service
-automatically. On macOS, start it after pairing:
+automatically. macOS also starts its launchd agent immediately after a
+successful pairing:
 
 ```bash
-computefield-machine start                    # macOS
 computefield-machine status
 ```
 

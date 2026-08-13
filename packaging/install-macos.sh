@@ -33,4 +33,3 @@ echo "computefield-machine pair CODE"
 if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
   echo "Add $BIN_DIR to PATH before running the command."
 fi
-echo "After pairing, run: computefield-machine start"

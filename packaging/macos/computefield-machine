@@ -11,30 +11,55 @@ label="com.computefield.machine"
 domain="gui/$(id -u)"
 plist="${HOME}/Library/LaunchAgents/${label}.plist"
 
+start_agent() {
+  if launchctl print "${domain}/${label}" >/dev/null 2>&1; then
+    launchctl kickstart -k "${domain}/${label}"
+  else
+    launchctl bootstrap "$domain" "$plist"
+  fi
+}
+
+stop_agent() {
+  if launchctl print "${domain}/${label}" >/dev/null 2>&1; then
+    launchctl bootout "${domain}/${label}"
+  fi
+}
+
 case "${1:-}" in
   start)
-    if launchctl print "${domain}/${label}" >/dev/null 2>&1; then
-      launchctl kickstart -k "${domain}/${label}"
-    else
-      launchctl bootstrap "$domain" "$plist"
-    fi
+    start_agent
     echo "ComputeField Machine started."
     exit 0
     ;;
   stop)
-    if launchctl print "${domain}/${label}" >/dev/null 2>&1; then
-      launchctl bootout "${domain}/${label}"
-    fi
+    stop_agent
     echo "ComputeField Machine stopped."
     exit 0
     ;;
   restart)
-    if launchctl print "${domain}/${label}" >/dev/null 2>&1; then
-      launchctl bootout "${domain}/${label}"
-    fi
-    launchctl bootstrap "$domain" "$plist"
+    stop_agent
+    start_agent
     echo "ComputeField Machine restarted."
     exit 0
+    ;;
+  pair|sharing)
+    if "$prefix/venv/bin/computefield-machine" "$@"; then
+      start_agent
+      echo "ComputeField Machine is running."
+      exit 0
+    else
+      status=$?
+      exit "$status"
+    fi
+    ;;
+  unpair)
+    if "$prefix/venv/bin/computefield-machine" "$@"; then
+      stop_agent
+      exit 0
+    else
+      status=$?
+      exit "$status"
+    fi
     ;;
 esac
 

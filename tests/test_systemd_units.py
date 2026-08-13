@@ -15,3 +15,6 @@ def test_service_keeps_kernel_proc_metadata_visible_to_bubblewrap(name):
     assert "ProtectProc=invisible" in unit
     assert "ProtectKernelTunables=true" in unit
     assert "ProcSubset=pid" not in unit
+    assert "RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK" in unit
+    assert "ExecStartPre=" in unit
+    assert "computefield-machine doctor" in unit

@@ -165,7 +165,11 @@ activated=1
 trap - EXIT HUP INT TERM
 systemctl daemon-reload || true
 systemctl enable "$service_name" || true
-systemctl try-restart "$service_name" || true
+if [ -s "$state_root/identity.json" ]; then
+  systemctl restart "$service_name"
+else
+  systemctl stop "$service_name" >/dev/null 2>&1 || true
+fi
 case "$previous" in
   "$app_root"/venv.candidate.*|"$app_root"/venv.legacy.*)
     [ "$previous" = "$candidate" ] || rm -rf "$previous"
@@ -204,7 +208,9 @@ case "\${1:-}" in
 esac
 if [ "\${1:-}" = purge ]; then
   rm -rf "$state_root"
+  rm -rf "/etc/${service_name%.service}" "/etc/systemd/system/$service_name.d"
   userdel "$service_user" >/dev/null 2>&1 || true
+  systemctl daemon-reload >/dev/null 2>&1 || true
 fi
 EOF
 chmod 0755 "$ROOT/DEBIAN/postrm"

@@ -14,6 +14,7 @@ Environment=MACHINE_WORK_DIR=/var/lib/computefield-machine/work
 Environment=MACHINE_ISOLATION_MODE=sandbox
 Environment=COMPUTEFIELD_BWRAP=/opt/computefield-machine/bin/bwrap
 EnvironmentFile=-/etc/computefield-machine/environment
+ExecStartPre=/opt/computefield-machine/venv/bin/computefield-machine doctor
 ExecStart=/opt/computefield-machine/venv/bin/computefield-machine run
 Restart=always
 RestartSec=5
@@ -42,7 +43,9 @@ ProtectKernelModules=true
 ProtectKernelTunables=true
 ProtectHostname=true
 RestrictRealtime=true
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# AF_NETLINK is required only while Bubblewrap configures loopback inside the
+# workload's isolated network namespace. The workload has no host networking.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
 SystemCallFilter=~@raw-io @reboot @swap
 SystemCallErrorNumber=EPERM
 SystemCallArchitectures=native

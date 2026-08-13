@@ -101,6 +101,20 @@ computefield-machine unpair --yes              # remove local identity
 Unlinking a Machine in the browser immediately revokes its server credential.
 Installers honor standard proxy and TLS environment variables.
 
+## Uninstall or reinstall on Ubuntu
+
+Remove the CPU package and its local pairing, cached workloads, service user,
+AppArmor profile, and service configuration:
+
+```bash
+sudo apt-get purge -y computefield-machine-cpu
+```
+
+For the NVIDIA package, use `computefield-machine` instead. Unlink the old
+offline card on the Machines page, then run the corresponding public install
+command above and pair it again. A normal upgrade or reinstall preserves the
+pairing; `purge` deliberately removes it.
+
 ## Develop and release
 
 ```bash

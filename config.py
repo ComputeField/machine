@@ -4,12 +4,17 @@ import json
 import os
 from pathlib import Path
 
-from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+_ENV_FILE = Path(__file__).resolve().with_name(".env")
 
 
 class Settings(BaseSettings):
-    model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # Resolve development settings beside this module. A relative `.env`
+    # would depend on the caller's working directory and can be unreadable
+    # when the packaged CLI drops privileges during installation.
+    model_config = SettingsConfigDict(env_file=_ENV_FILE, env_file_encoding="utf-8", extra="ignore")
     machine_broker_url: str = "wss://computefield.net/ws/machine"
     computefield_api_url: str = "https://computefield.net"
     machine_name: str = ""
@@ -19,7 +24,7 @@ class Settings(BaseSettings):
     # Selects one server-configured object-storage route. Ordinary installed
     # Machines stay on "external"; the Docker dev worker uses "internal".
     machine_transfer_route: str = "external"
-    client_version: str = "0.1.3"
+    client_version: str = "0.1.4"
     allow_foreign_workloads: bool = False
     machine_isolation_mode: str = "none"
     hardware_stats_interval: int = 5

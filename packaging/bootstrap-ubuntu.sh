@@ -10,7 +10,9 @@ command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1 || {
 }
 
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl
+if ! command -v curl >/dev/null 2>&1; then
+  DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl
+fi
 download_dir="$(mktemp -d)"
 package="$download_dir/computefield-machine_amd64.deb"
 checksum="$package.sha256"

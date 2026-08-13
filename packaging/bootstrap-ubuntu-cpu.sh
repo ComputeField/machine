@@ -6,7 +6,9 @@ set -Eeuo pipefail
 [[ "$(uname -m)" == "x86_64" ]] || { echo "The published CPU package currently requires x86_64." >&2; exit 1; }
 
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl
+if ! command -v curl >/dev/null 2>&1; then
+  DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl
+fi
 download_dir="$(mktemp -d)"
 package="$download_dir/computefield-machine-cpu_amd64.deb"
 checksum="$package.sha256"

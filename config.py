@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # Selects one server-configured object-storage route. Ordinary installed
     # Machines stay on "external"; the Docker dev worker uses "internal".
     machine_transfer_route: str = "external"
-    client_version: str = "0.1.4"
+    client_version: str = "0.1.5"
     allow_foreign_workloads: bool = False
     machine_isolation_mode: str = "none"
     hardware_stats_interval: int = 5

@@ -27,7 +27,9 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ProtectProc=invisible
-ProcSubset=pid
+# Bubblewrap reads overflowuid/overflowgid while creating a user namespace.
+# Keep process visibility restricted, but leave the read-only kernel proc files
+# visible to the trusted controller.
 ReadWritePaths=/var/lib/computefield-machine
 RestrictSUIDSGID=true
 LockPersonality=true

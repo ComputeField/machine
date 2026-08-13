@@ -14,6 +14,7 @@ if ! command -v curl >/dev/null 2>&1; then
   DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl
 fi
 download_dir="$(mktemp -d)"
+chmod 0755 "$download_dir"
 package="$download_dir/computefield-machine_amd64.deb"
 checksum="$package.sha256"
 release_base="${COMPUTEFIELD_RELEASE_BASE_URL:-https://github.com/ComputeField/machine/releases/latest/download}"
@@ -25,6 +26,7 @@ curl --fail --location --proto '=https' --tlsv1.2 \
   "$release_base/computefield-machine_amd64.deb.sha256" \
   --output "$checksum")
 (cd "$download_dir" && sha256sum --check computefield-machine_amd64.deb.sha256)
+chmod 0644 "$package"
 apt-get install -y "$package"
 
 echo "Installed. Open Machines in Compute Field and copy the generated pairing command."

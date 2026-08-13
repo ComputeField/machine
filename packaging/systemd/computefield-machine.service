@@ -12,6 +12,7 @@ Group=computefield-machine
 Environment=MACHINE_IDENTITY_FILE=/var/lib/computefield-machine/identity.json
 Environment=MACHINE_WORK_DIR=/var/lib/computefield-machine/work
 Environment=MACHINE_ISOLATION_MODE=sandbox
+Environment=COMPUTEFIELD_BWRAP=/opt/computefield-machine/bin/bwrap
 EnvironmentFile=-/etc/computefield-machine/environment
 ExecStart=/opt/computefield-machine/venv/bin/computefield-machine run
 Restart=always

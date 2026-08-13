@@ -45,6 +45,10 @@ environment. The first install downloads the pinned PyTorch runtime and can
 take several minutes; an interrupted upgrade does not replace the previous
 working environment.
 
+Ubuntu's restricted-user-namespace policy is supported without disabling it:
+the package provisions a path-specific AppArmor permission for its private,
+root-owned Bubblewrap executable. No global security sysctl is changed.
+
 ## Pair
 
 Open **Machines → Connect machine** at `https://computefield.net/machines` and

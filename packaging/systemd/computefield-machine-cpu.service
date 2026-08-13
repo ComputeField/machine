@@ -14,6 +14,7 @@ Environment=MACHINE_WORK_DIR=/var/lib/computefield-machine-cpu/work
 Environment=MACHINE_ISOLATION_MODE=sandbox
 Environment=MACHINE_COMPUTE_MODE=cpu
 Environment=CUDA_VISIBLE_DEVICES=
+Environment=COMPUTEFIELD_BWRAP=/opt/computefield-machine-cpu/bin/bwrap
 EnvironmentFile=-/etc/computefield-machine-cpu/environment
 ExecStart=/opt/computefield-machine-cpu/venv/bin/computefield-machine run
 Restart=always

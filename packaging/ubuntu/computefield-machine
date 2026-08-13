@@ -40,6 +40,7 @@ case "$command_name" in
         MACHINE_ISOLATION_MODE=sandbox \
         MACHINE_COMPUTE_MODE=cpu \
         CUDA_VISIBLE_DEVICES= \
+        COMPUTEFIELD_BWRAP="$app_root/bin/bwrap" \
         "$binary" "$@"
     else
       runuser -u "$service_user" -- env \
@@ -47,6 +48,7 @@ case "$command_name" in
         MACHINE_WORK_DIR="$work_dir" \
         MACHINE_ISOLATION_MODE=sandbox \
         MACHINE_COMPUTE_MODE=auto \
+        COMPUTEFIELD_BWRAP="$app_root/bin/bwrap" \
         "$binary" "$@"
     fi
     status=$?

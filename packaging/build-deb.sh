@@ -20,6 +20,7 @@ case "$PROFILE" in
     app_root="/opt/computefield-machine"
     state_root="/var/lib/computefield-machine"
     service_source="packaging/systemd/computefield-machine.service"
+    apparmor_profile="computefield-machine-bwrap"
     torch_specs="torch==2.13.0 torchvision==0.28.0"
     torch_index_option="--index-url"
     torch_index_url="https://download.pytorch.org/whl/cu130"
@@ -33,6 +34,7 @@ case "$PROFILE" in
     app_root="/opt/computefield-machine-cpu"
     state_root="/var/lib/computefield-machine-cpu"
     service_source="packaging/systemd/computefield-machine-cpu.service"
+    apparmor_profile="computefield-machine-cpu-bwrap"
     torch_specs="torch==2.13.0+cpu torchvision==0.28.0+cpu"
     torch_index_option="--extra-index-url"
     torch_index_url="https://download.pytorch.org/whl/cpu"
@@ -48,7 +50,7 @@ BUILD_DIR="$(mktemp -d)"
 trap 'rm -rf "$BUILD_DIR"' EXIT
 ROOT="$BUILD_DIR/${package_name}_${VERSION}_amd64"
 SOURCE_ROOT="$ROOT$app_root/source"
-install -d "$ROOT/DEBIAN" "$SOURCE_ROOT" "$ROOT/usr/bin" "$ROOT/etc/systemd/system"
+install -d "$ROOT/DEBIAN" "$SOURCE_ROOT" "$ROOT/usr/bin" "$ROOT/etc/systemd/system" "$ROOT/etc/apparmor.d"
 runtime_sources=(
   LICENSE requirements.txt pyproject.toml
   capabilities.py cli.py config.py delta.py executor.py gpu_device.py main.py
@@ -59,12 +61,20 @@ tar -C "$SOURCE_DIR" -cf - "${runtime_sources[@]}" | tar -x -C "$SOURCE_ROOT"
 chmod -R go-w "$SOURCE_ROOT"
 install -m 0755 "$SOURCE_DIR/packaging/ubuntu/computefield-machine" "$ROOT/usr/bin/$command_name"
 install -m 0644 "$SOURCE_DIR/$service_source" "$ROOT/etc/systemd/system/$service_name"
+cat >"$ROOT/etc/apparmor.d/$apparmor_profile" <<EOF
+abi <abi/4.0>,
+include <tunables/global>
+
+profile $apparmor_profile $app_root/bin/bwrap flags=(unconfined) {
+  userns,
+}
+EOF
 cat >"$ROOT/DEBIAN/control" <<EOF
 Package: $package_name
 Version: $VERSION
 Architecture: amd64
 Maintainer: Compute Field Lab, LLC <support@computefield.com>
-Depends: python3 (>= 3.10), python3-venv, ca-certificates, bubblewrap, util-linux
+Depends: python3 (>= 3.10), python3-venv, ca-certificates, apparmor, bubblewrap, util-linux
 Section: science
 Priority: optional
 Description: $description
@@ -77,13 +87,17 @@ service_user="@SERVICE_USER@"
 service_name="@SERVICE_NAME@"
 app_root="@APP_ROOT@"
 state_root="@STATE_ROOT@"
+apparmor_profile="@APPARMOR_PROFILE@"
 if [ "$profile" = gpu ]; then
   command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1 || {
     echo "Install a working NVIDIA driver before ComputeField Machine." >&2
     exit 1
   }
 fi
-bwrap --help 2>&1 | grep -q -- '--disable-userns' || {
+install -d -m 0755 "$app_root/bin"
+install -o root -g root -m 0755 /usr/bin/bwrap "$app_root/bin/bwrap"
+apparmor_parser -r "/etc/apparmor.d/$apparmor_profile" >/dev/null 2>&1 || true
+"$app_root/bin/bwrap" --help 2>&1 | grep -q -- '--disable-userns' || {
   echo "Bubblewrap with --disable-userns is required (Ubuntu 24.04 or newer)." >&2
   exit 1
 }
@@ -119,6 +133,7 @@ if [ "$profile" = cpu ]; then
     MACHINE_ISOLATION_MODE=sandbox \
     MACHINE_COMPUTE_MODE=cpu \
     CUDA_VISIBLE_DEVICES= \
+    COMPUTEFIELD_BWRAP="$app_root/bin/bwrap" \
     "$candidate/bin/computefield-machine" doctor || {
       echo "ComputeField Machine requires working unprivileged user namespaces; host policy was not modified." >&2
       exit 1
@@ -129,6 +144,7 @@ else
     MACHINE_WORK_DIR="$state_root/work" \
     MACHINE_ISOLATION_MODE=sandbox \
     MACHINE_COMPUTE_MODE=auto \
+    COMPUTEFIELD_BWRAP="$app_root/bin/bwrap" \
     "$candidate/bin/computefield-machine" doctor || {
       echo "ComputeField Machine requires working unprivileged user namespaces; host policy was not modified." >&2
       exit 1
@@ -162,6 +178,7 @@ sed -i \
   -e "s|@SERVICE_NAME@|$service_name|g" \
   -e "s|@APP_ROOT@|$app_root|g" \
   -e "s|@STATE_ROOT@|$state_root|g" \
+  -e "s|@APPARMOR_PROFILE@|$apparmor_profile|g" \
   -e "s|@TORCH_SPECS@|$torch_specs|g" \
   -e "s|@TORCH_INDEX_OPTION@|$torch_index_option|g" \
   -e "s|@TORCH_INDEX_URL@|$torch_index_url|g" \
@@ -172,6 +189,7 @@ cat >"$ROOT/DEBIAN/prerm" <<EOF
 set -e
 if [ "\${1:-}" = remove ]; then
   systemctl disable --now "$service_name" >/dev/null 2>&1 || true
+  apparmor_parser -R "/etc/apparmor.d/$apparmor_profile" >/dev/null 2>&1 || true
 fi
 EOF
 chmod 0755 "$ROOT/DEBIAN/prerm"

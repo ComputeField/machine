@@ -18,9 +18,11 @@ startup perform an escape self-test.
 On Linux the installer accepts only an ordinary, non-setuid Bubblewrap with
 `--disable-userns` support and working unprivileged user namespaces. The
 published package therefore requires Ubuntu 24.04 or newer. It aborts if the
-kernel or AppArmor policy denies that boundary. It never changes a
-user-namespace sysctl, makes a binary setuid, disables AppArmor, enables
-virtualization, or changes BIOS settings.
+kernel denies that boundary. Ubuntu packages install a root-owned private copy
+of Bubblewrap and a path-specific AppArmor profile granting only that executable
+the `userns` permission required by Ubuntu 24.04. They never change a global
+user-namespace sysctl, make a binary setuid, disable AppArmor, enable
+virtualization, or change BIOS settings.
 
 The Docker Compose definition is a private development harness, not a shared
 host boundary. It advertises no workload isolation and cannot opt into

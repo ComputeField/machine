@@ -61,12 +61,16 @@ def _clean_environment(task_dir: str) -> dict[str, str]:
 
 
 def _linux_command(command: list[str], task_dir: str) -> list[str]:
-    bwrap = shutil.which("bwrap")
+    configured = os.environ.get("COMPUTEFIELD_BWRAP", "").strip()
+    bwrap = configured or shutil.which("bwrap")
     if not bwrap:
         raise SandboxUnavailable("bubblewrap is required; reinstall ComputeField Machine")
 
-    if os.stat(bwrap).st_mode & stat.S_ISUID:
+    metadata = os.stat(bwrap)
+    if metadata.st_mode & stat.S_ISUID:
         raise SandboxUnavailable("refusing a setuid bubblewrap installation")
+    if configured and (metadata.st_uid != 0 or metadata.st_mode & 0o022):
+        raise SandboxUnavailable("configured bubblewrap must be root-owned and not group/world-writable")
     args = [
         bwrap,
         "--die-with-parent",

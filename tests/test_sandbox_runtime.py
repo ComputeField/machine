@@ -62,6 +62,38 @@ def test_linux_policy_rejects_setuid_bubblewrap(tmp_path, monkeypatch):
         sandbox_runtime.sandbox_command([sys.executable, "-c", "pass"], str(tmp_path))
 
 
+def test_configured_bubblewrap_must_be_root_owned_and_immutable(tmp_path, monkeypatch):
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
+    bwrap = tmp_path / "bwrap"
+    bwrap.write_text("", encoding="utf-8")
+    bwrap.chmod(0o755)
+    monkeypatch.setenv("COMPUTEFIELD_BWRAP", str(bwrap))
+
+    with pytest.raises(sandbox_runtime.SandboxUnavailable, match="root-owned"):
+        sandbox_runtime.sandbox_command([sys.executable, "-c", "pass"], str(tmp_path))
+
+
+def test_configured_root_owned_bubblewrap_is_used(tmp_path, monkeypatch):
+    monkeypatch.setattr(platform, "system", lambda: "Linux")
+    bwrap = tmp_path / "private-bwrap"
+    bwrap.write_text("", encoding="utf-8")
+    real_stat = sandbox_runtime.os.stat
+    monkeypatch.setattr(
+        sandbox_runtime.os,
+        "stat",
+        lambda path, *args, **kwargs: (
+            SimpleNamespace(st_mode=0o755, st_uid=0)
+            if str(path) == str(bwrap)
+            else real_stat(path, *args, **kwargs)
+        ),
+    )
+    monkeypatch.setenv("COMPUTEFIELD_BWRAP", str(bwrap))
+
+    command = sandbox_runtime.sandbox_command([sys.executable, "-c", "pass"], str(tmp_path))
+
+    assert command[0] == str(bwrap)
+
+
 @pytest.mark.skipif(platform.system() != "Darwin", reason="macOS-only policy")
 def test_macos_policy_denies_network_identity_tree_and_external_writes(tmp_path):
     task = tmp_path / "work" / "task"
